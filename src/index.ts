@@ -1,4 +1,3 @@
-import express from "express";
 import TelegramBot from "node-telegram-bot-api";
 import axios, { AxiosResponse } from "axios";
 import dotenv from "dotenv";
@@ -6,15 +5,20 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const TELEGRAM_TOKEN: string | undefined = process.env.TELEGRAM_TOKEN;
-const OLLAMA_HOST: string | undefined = process.env.OLLAMA_HOST || "http://localhost:11434";
+const OLLAMA_HOST: string = process.env.OLLAMA_HOST || "http://localhost:11434";
 
-const bot: TelegramBot = new TelegramBot(TELEGRAM_TOKEN!, { polling: true });
+if (!TELEGRAM_TOKEN) {
+    console.error("❌ TELEGRAM_TOKEN not found");
+    process.exit(1);
+}
+
+const bot: TelegramBot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
 
 
 async function askOllama(prompt: any) {
     try {
         const response: AxiosResponse = await axios.post(`${OLLAMA_HOST}/api/generate`, {
-            model: "llama3",   // o altro modello presente in Ollama
+            model: "llama3",
             prompt,
             stream: false
         });
@@ -30,7 +34,6 @@ bot.on("message", async (msg) => {
     const chatId: number = msg.chat.id;
     const text: string | undefined = msg.text;
 
-    // Evita risposte a comandi tipo /start
     if (!text || text.startsWith("/")) return;
 
     // Risposta generata da Ollama
